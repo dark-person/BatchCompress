@@ -56,7 +56,7 @@ func getFileNumber() int {
 
 func getStringByInput(message string) string {
 	var temp string
-	fmt.Println("Enter the folder to compress..")
+	fmt.Println(message)
 	fmt.Scanln(&temp)
 	return temp
 }
@@ -74,26 +74,6 @@ func ConfirmPrompt(message string) bool {
 		return ConfirmPrompt("Invalid Input. Please Enter Again.\n\n" + message)
 	}
 }
-
-// func appendFiles(filename string, zipw *zip.Writer) error {
-// 	file, err := os.Open(filename)
-// 	if err != nil {
-// 		return fmt.Errorf("Failed to open %s: %s", filename, err)
-// 	}
-// 	defer file.Close()
-
-// 	wr, err := zipw.Create(filename)
-// 	if err != nil {
-// 		msg := "Failed to create entry for %s in zip file: %s"
-// 		return fmt.Errorf(msg, filename, err)
-// 	}
-
-// 	if _, err := io.Copy(wr, file); err != nil {
-// 		return fmt.Errorf("Failed to write %s to zip: %s", filename, err)
-// 	}
-
-// 	return nil
-// }
 
 func createFlatZip(w io.Writer, files ...string) error {
 	z := zip.NewWriter(w)
@@ -151,32 +131,36 @@ func main() {
 		os.Exit(99)
 	}
 
+	// TODO: Offset to prevent last archive has too small number of files
+
 	// ========================== User Confirm ========================
 
 	// Looping Start
 	previous := 0
 	for i := 0; i < compress_needed; i++ {
-		archive_name := "test_" + strconv.Itoa(i) + ".zip"
-		archive, err := os.Create(archive_name)
+		current_archive := archive_name + "_" + strconv.Itoa(i+1) + ".zip" // i+1 for human readable
+		archive, err := os.Create(current_archive)
 		if err != nil {
-			fmt.Printf("Failed to generate archive %s: %v\n", archive_name, err)
+			fmt.Printf("Failed to generate archive %s: %v\n", current_archive, err)
 		}
 		defer archive.Close()
 
 		high_bound := Min((i+1)*number, len(filelist))
-		fmt.Println("Test", i, ": ", filelist[previous:high_bound])
+		// fmt.Println("Test", i, ": ", filelist[previous:high_bound])
 
 		err2 := createFlatZip(archive, filelist[previous:high_bound]...)
 		if err2 != nil {
-			fmt.Printf("Failed to put file into archive %s: %v\n", archive_name, err)
+			fmt.Printf("Failed to put file into archive %s: %v\n", current_archive, err)
 		}
 
 		previous = (i + 1) * number
+		fmt.Printf("Archive %s is completed. Progress: %d/%d\n", current_archive, i+1, compress_needed)
 	}
 
 	// Report user by terminal message
 	fmt.Println("All file has archived successfully.")
+	fmt.Scanln()
 
-	// todo Delete the file that compressed
+	// Todo Delete the file that compressed
 
 }
